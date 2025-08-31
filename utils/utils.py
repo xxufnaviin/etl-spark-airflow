@@ -34,6 +34,7 @@ schema = StructType([
         StructField("deg", IntegerType(), True),
         StructField("gust", DoubleType(), True)
     ])),
+    StructField("rain", StructType([StructField("1h", DoubleType(), True)]), True),
     StructField("clouds", StructType([
         StructField("all", IntegerType(), True)
     ])),

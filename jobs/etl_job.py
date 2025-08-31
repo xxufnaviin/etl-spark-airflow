@@ -19,7 +19,7 @@ def get_lat_lon(city: str):
             else:
                 continue
             
-        return results
+        return results # only getting the first one, since the others are irrelavant at times
     
 def get_weather_data(city:str):
     results = get_lat_lon(city)
@@ -32,6 +32,9 @@ def get_weather_data(city:str):
 
     data['wind']['speed'] = float(data['wind']['speed'])
     data['wind']['gust'] = float(data['wind']['gust'])
+
+    if('rain' in data):
+        data['rain']['1h'] = float(data['rain']['1h'])
 
     data['main']['feels_like'] = float(data['main']['feels_like'])
     data['main']['temp'] = float(data['main']['temp'])
@@ -61,19 +64,16 @@ spark = create_spark()
 
 
 if __name__ == "__main__":
-    # get region from arguments 
+    # get region from arguments in next change
     print("ETL job started")
-    extract("ALL")
+
+    weather = extract("ALL")
+    
+    df = spark.createDataFrame(weather, schema=schema)
+    df.createOrReplaceTempView("weather")
 
 
-
-    # df = spark.createDataFrame(weather, schema=schema)
-
-    # df.show()
-    # df.createOrReplaceTempView("weather")
-
-
-    # spark.sql("""
-    # SELECT * FROM weather    
-    # """)
+    spark.sql("""
+    SELECT * FROM weather    
+    """).show()
 
