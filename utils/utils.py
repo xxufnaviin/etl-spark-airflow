@@ -11,12 +11,12 @@ load_dotenv()
 OWM_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 schema = StructType([
     StructField("coord", StructType([StructField("lon", DoubleType(), True), StructField("lat", DoubleType(), True)])),
-    StructField("weather", ArrayType(StructType([
+    StructField("weather", StructType([
         StructField("id", IntegerType(), True),
         StructField("main", StringType(), True),
         StructField("description", StringType(), True),
         StructField("icon", StringType(), True)
-    ]))),
+    ])),
     StructField("base", StringType(), True),
     StructField("main", StructType([
         StructField("temp", DoubleType(), True),
@@ -35,6 +35,7 @@ schema = StructType([
         StructField("gust", DoubleType(), True)
     ])),
     StructField("rain", StructType([StructField("1h", DoubleType(), True)]), True),
+    StructField("snow", StructType([StructField("1h", DoubleType(), True)]), True),
     StructField("clouds", StructType([
         StructField("all", IntegerType(), True)
     ])),

@@ -6,7 +6,7 @@ import requests
 
 sys.path.append(".")
 
-
+from utils.utils import *
 
 def get_lat_lon(city: str):
     req = f"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=5&appid={OWM_API_KEY}"
@@ -35,14 +35,39 @@ def get_weather_data(city:str):
 
     if('rain' in data):
         data['rain']['1h'] = float(data['rain']['1h'])
+        
+    if('snow' in data):
+        data['snow']['1h'] = float(data['snow']['1h'])
 
     data['main']['feels_like'] = float(data['main']['feels_like'])
     data['main']['temp'] = float(data['main']['temp'])
     data['main']['temp_min'] = float(data['main']['temp_min'])
     data['main']['temp_max'] = float(data['main']['temp_max'])
     
-
+    data['weather'] = data['weather'][0] # only save the first one
     return data
+
+
+def flatten_columns(df, exlcude_prefix):
+    for prefix in df.columns: 
+        newColumns = {}
+        if isinstance(df.schema[prefix].dataType, StructType): # check if column is nested column of the type struct
+            for fields in df.schema[prefix].dataType:
+                if(prefix in exlcude_prefix):
+                    newColName = f"{fields.name}"
+                else:
+                    newColName = f"{prefix}_{fields.name}"
+                    
+                column = f"{prefix}.{fields.name}"
+                newColumns[newColName] = column
+
+            # add new columns for each column 
+            df = df.withColumns(newColumns)\
+            .drop(prefix) # drop original column
+
+
+    return df
+
 
 def extract(region:str):
     weather = []
@@ -57,23 +82,25 @@ def extract(region:str):
     return weather
 
 
+def transform(weather):
+    df = spark.createDataFrame(weather, schema=schema)
+    df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
 
-from utils.utils import *
+    df.show(5)
+    
 
-spark = create_spark()
 
 
 if __name__ == "__main__":
     # get region from arguments in next change
     print("ETL job started")
+    spark = create_spark()
+
 
     weather = extract("ALL")
-    
-    df = spark.createDataFrame(weather, schema=schema)
-    df.createOrReplaceTempView("weather")
+    transform(weather)
 
 
-    spark.sql("""
-    SELECT * FROM weather    
-    """).show()
+
+
 
