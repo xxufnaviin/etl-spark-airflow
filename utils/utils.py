@@ -1,8 +1,9 @@
 
 import os
 from dotenv import load_dotenv
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import *
+from pyspark.sql.functions import from_unixtime,col
 
 
 load_dotenv()
@@ -65,7 +66,11 @@ locations["ALL"] = (locations["SEA"] + locations["NA"] + locations["SA"] + locat
 
 
 def create_spark():
-    spark = SparkSession.builder.appName("ETL Pipeline").config("spark.driver.memory", "2g").getOrCreate()
+    spark = SparkSession.builder.appName("ETL Pipeline")\
+        .config("spark.driver.memory", "2g")\
+        .config("spark.sql.session.timeZone", "UTC").\
+        getOrCreate()
+    
     return spark
 
 

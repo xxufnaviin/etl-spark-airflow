@@ -2,13 +2,15 @@
 # pySpark
 
 import sys
-import requests
-
+import requests 
 sys.path.append(".")
 
 from utils.utils import *
 
-def get_lat_lon(city: str):
+spark = create_spark()
+
+
+def get_lat_lon(city: str) -> dict:
     req = f"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=5&appid={OWM_API_KEY}"
     data = requests.get(req).json()
     results = {}
@@ -21,7 +23,7 @@ def get_lat_lon(city: str):
             
         return results # only getting the first one, since the others are irrelavant at times
     
-def get_weather_data(city:str):
+def get_weather_data(city:str) -> dict:
     results = get_lat_lon(city)
     req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}"
     data = requests.get(req).json()
@@ -48,7 +50,7 @@ def get_weather_data(city:str):
     return data
 
 
-def flatten_columns(df, exlcude_prefix):
+def flatten_columns(df:DataFrame, exlcude_prefix:list) -> DataFrame:
     for prefix in df.columns: 
         newColumns = {}
         if isinstance(df.schema[prefix].dataType, StructType): # check if column is nested column of the type struct
@@ -68,8 +70,28 @@ def flatten_columns(df, exlcude_prefix):
 
     return df
 
+def convert_datetime(df:DataFrame, datetimes:list, timezone:str) -> DataFrame:
+    convert_datetimes_UTC = {}
+    rename_datetimes_UTC = {}
 
-def extract(region:str):
+    for columns in datetimes:
+        if columns in df.columns:
+            convert_datetimes_UTC[columns] = from_unixtime(columns)
+            rename_datetimes_UTC[columns] = f"{columns} (UTC)"
+        else:
+            print(f"{columns} is not found in Dataframe. Ignored")
+    
+    
+    df = df.withColumns(convert_datetimes_UTC)\
+        .withColumnsRenamed(rename_datetimes_UTC)
+
+    if timezone:
+        df = df.withColumn(timezone, col(timezone)/3600)
+        return df
+
+    return df
+
+def extract(region:str) -> list:
     weather = []
     if region not in locations:
         print(f"\nRegion not found! The available regions are: \n{', '.join([x for x in locations])}\n")
@@ -82,9 +104,10 @@ def extract(region:str):
     return weather
 
 
-def transform(weather):
+def transform(weather:list):
     df = spark.createDataFrame(weather, schema=schema)
     df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
+    df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
 
     df.show(5)
     
@@ -94,8 +117,6 @@ def transform(weather):
 if __name__ == "__main__":
     # get region from arguments in next change
     print("ETL job started")
-    spark = create_spark()
-
 
     weather = extract("ALL")
     transform(weather)
