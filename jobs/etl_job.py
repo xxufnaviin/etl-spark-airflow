@@ -2,13 +2,15 @@
 # pySpark
 
 import sys
-import requests
-
+import requests 
 sys.path.append(".")
 
+from utils.utils import *
+
+spark = create_spark()
 
 
-def get_lat_lon(city: str):
+def get_lat_lon(city: str) -> dict:
     req = f"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=5&appid={OWM_API_KEY}"
     data = requests.get(req).json()
     results = {}
@@ -21,7 +23,7 @@ def get_lat_lon(city: str):
             
         return results # only getting the first one, since the others are irrelavant at times
     
-def get_weather_data(city:str):
+def get_weather_data(city:str) -> dict:
     results = get_lat_lon(city)
     req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}"
     data = requests.get(req).json()
@@ -35,16 +37,61 @@ def get_weather_data(city:str):
 
     if('rain' in data):
         data['rain']['1h'] = float(data['rain']['1h'])
+        
+    if('snow' in data):
+        data['snow']['1h'] = float(data['snow']['1h'])
 
     data['main']['feels_like'] = float(data['main']['feels_like'])
     data['main']['temp'] = float(data['main']['temp'])
     data['main']['temp_min'] = float(data['main']['temp_min'])
     data['main']['temp_max'] = float(data['main']['temp_max'])
     
-
+    data['weather'] = data['weather'][0] # only save the first one
     return data
 
-def extract(region:str):
+
+def flatten_columns(df:DataFrame, exlcude_prefix:list) -> DataFrame:
+    for prefix in df.columns: 
+        newColumns = {}
+        if isinstance(df.schema[prefix].dataType, StructType): # check if column is nested column of the type struct
+            for fields in df.schema[prefix].dataType:
+                if(prefix in exlcude_prefix):
+                    newColName = f"{fields.name}"
+                else:
+                    newColName = f"{prefix}_{fields.name}"
+                    
+                column = f"{prefix}.{fields.name}"
+                newColumns[newColName] = column
+
+            # add new columns for each column 
+            df = df.withColumns(newColumns)\
+            .drop(prefix) # drop original column
+
+
+    return df
+
+def convert_datetime(df:DataFrame, datetimes:list, timezone:str) -> DataFrame:
+    convert_datetimes_UTC = {}
+    rename_datetimes_UTC = {}
+
+    for columns in datetimes:
+        if columns in df.columns:
+            convert_datetimes_UTC[columns] = from_unixtime(columns)
+            rename_datetimes_UTC[columns] = f"{columns} (UTC)"
+        else:
+            print(f"{columns} is not found in Dataframe. Ignored")
+    
+    
+    df = df.withColumns(convert_datetimes_UTC)\
+        .withColumnsRenamed(rename_datetimes_UTC)
+
+    if timezone:
+        df = df.withColumn(timezone, col(timezone)/3600)
+        return df
+
+    return df
+
+def extract(region:str) -> list:
     weather = []
     if region not in locations:
         print(f"\nRegion not found! The available regions are: \n{', '.join([x for x in locations])}\n")
@@ -57,10 +104,14 @@ def extract(region:str):
     return weather
 
 
+def transform(weather:list):
+    df = spark.createDataFrame(weather, schema=schema)
+    df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
+    df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
 
-from utils.utils import *
+    df.show(5)
+    
 
-spark = create_spark()
 
 
 if __name__ == "__main__":
@@ -68,12 +119,9 @@ if __name__ == "__main__":
     print("ETL job started")
 
     weather = extract("ALL")
-    
-    df = spark.createDataFrame(weather, schema=schema)
-    df.createOrReplaceTempView("weather")
+    transform(weather)
 
 
-    spark.sql("""
-    SELECT * FROM weather    
-    """).show()
+
+
 
