@@ -2,12 +2,6 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-import sys
-import os
-# Add the project root to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(".")
-
 from jobs.etl_job import extract, transform
 
 # Default arguments for the DAG
@@ -32,13 +26,10 @@ dag = DAG(
 )
 
 def extract_weather_data(**context):
-    """Extract weather data for all regions"""
     weather_data = extract("ALL")
     return weather_data
 
 def transform_weather_data(**context):
-    """Transform the extracted weather data"""
-    # Get data from previous task
     ti = context['ti']
     weather_data = ti.xcom_pull(task_ids='extract_task')
     
