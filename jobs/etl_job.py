@@ -1,10 +1,7 @@
 # ETL script for data ingestion, transformation and loading
 # pySpark
 
-import sys
 import requests 
-sys.path.append(".")
-
 from utils.utils import *
 
 spark = create_spark()
