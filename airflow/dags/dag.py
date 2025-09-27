@@ -4,9 +4,9 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from jobs.etl_job import extract, transform, load
 
-# Default arguments for the DAG
+
 default_args = {
-    'owner': 'data-engineer',
+    'owner': 'naviin raj',
     'depends_on_past': False,
     'start_date': datetime(2024, 1, 1),
     'email_on_failure': False,
@@ -17,7 +17,7 @@ default_args = {
 
 REGION = "ALL"
 
-# Define the DAG
+
 dag = DAG(
     'weather_etl_pipeline',
     default_args=default_args,
