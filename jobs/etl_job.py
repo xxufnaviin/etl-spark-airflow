@@ -29,8 +29,11 @@ def get_weather_data(city:str) -> dict:
     data['coord']['lon'] = float(data['coord']['lon'])
     data['coord']['lat'] = float(data['coord']['lat'])
 
-    data['wind']['speed'] = float(data['wind']['speed'])
-    data['wind']['gust'] = float(data['wind']['gust'])
+    if 'speed' in data['wind']:
+        data['wind']['speed'] = float(data['wind']['speed'])
+
+    if 'gust' in data['wind']:
+        data['wind']['gust'] = float(data['wind']['gust'])
 
     if('rain' in data):
         data['rain']['1h'] = float(data['rain']['1h'])
@@ -88,6 +91,20 @@ def convert_datetime(df:DataFrame, datetimes:list, timezone:str) -> DataFrame:
 
     return df
 
+def reorder_columns(df:DataFrame, orderByID:bool):
+    # drop internal params (cod, base)
+    df = df.select("id","name","country","lon","lat",\
+                    "timezone","dt (UTC)","sunrise (UTC)","sunset (UTC)",\
+                    "weather_id","weather_main","weather_description","weather_icon",\
+                    "temp","feels_like","temp_min","temp_max",\
+                    "pressure","humidity","sea_level","grnd_level",\
+                    "wind_speed","wind_deg","wind_gust","rain_1h","snow_1h","clouds_all","visibility")\
+    
+    if orderByID:
+        df = df.orderBy("id")
+
+    return df
+
 def extract(region:str) -> list:
     weather = []
     if region not in locations:
@@ -105,7 +122,7 @@ def transform(weather:list):
     df = spark.createDataFrame(weather, schema=schema)
     df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
     df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
-
+    df = reorder_columns(df, orderByID=True)
     df.show(5)
     
 
