@@ -22,7 +22,7 @@ def get_lat_lon(city: str) -> dict:
     
 def get_weather_data(city:str) -> dict:
     results = get_lat_lon(city)
-    req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}"
+    req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}&units=metric"
     data = requests.get(req).json()
 
     # cast all integer to float if any
@@ -41,10 +41,17 @@ def get_weather_data(city:str) -> dict:
     if('snow' in data):
         data['snow']['1h'] = float(data['snow']['1h'])
 
-    data['main']['feels_like'] = float(data['main']['feels_like'])
-    data['main']['temp'] = float(data['main']['temp'])
-    data['main']['temp_min'] = float(data['main']['temp_min'])
-    data['main']['temp_max'] = float(data['main']['temp_max'])
+    if 'feels_like' in data['main']:
+        data['main']['feels_like'] = float(data['main']['feels_like'])
+
+    if 'temp' in data['main']:
+        data['main']['temp'] = float(data['main']['temp'])
+
+    if 'temp_min' in data['main']:
+        data['main']['temp_min'] = float(data['main']['temp_min'])
+
+    if 'temp_max' in data['main']:
+        data['main']['temp_max'] = float(data['main']['temp_max'])
     
     data['weather'] = data['weather'][0] # only save the first one
     return data
@@ -91,7 +98,7 @@ def convert_datetime(df:DataFrame, datetimes:list, timezone:str) -> DataFrame:
 
     return df
 
-def reorder_columns(df:DataFrame, orderByID:bool):
+def reorder_columns(df:DataFrame, orderByID:bool) -> DataFrame:
     # drop internal params (cod, base)
     df = df.select("id","name","country","lon","lat",\
                     "timezone","dt (UTC)","sunrise (UTC)","sunset (UTC)",\
@@ -118,13 +125,13 @@ def extract(region:str) -> list:
     return weather
 
 
-def transform(weather:list):
+def transform(weather:list) -> DataFrame:
     df = spark.createDataFrame(weather, schema=schema)
     df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
     df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
-    df = reorder_columns(df, orderByID=True)
-    df.show(5)
+    df = reorder_columns(df, orderByID=False)
     
+    return df
 
 
 
@@ -133,7 +140,14 @@ if __name__ == "__main__":
     print("ETL job started")
 
     weather = extract("ALL")
-    transform(weather)
+    df = transform(weather)
+    # df.show(5)
+    df_select = df.select("id","name","country",\
+                      "timezone","dt (UTC)",\
+                      "weather_description",\
+                      "temp",\
+                      "pressure","humidity","sea_level","grnd_level",\
+                      "wind_speed","rain_1h","snow_1h","visibility").show()
 
 
 
