@@ -133,6 +133,12 @@ def transform(weather:list) -> DataFrame:
     
     return df
 
+def load(df:DataFrame):
+    weather_data_csv = f"data/weather_{get_current_date()}.csv"
+    df_pandas = df.toPandas()
+
+    if not data_exists(weather_data_csv):
+        df_pandas.to_csv(weather_data_csv, index=False) 
 
 
 if __name__ == "__main__":
@@ -141,14 +147,13 @@ if __name__ == "__main__":
 
     weather = extract("ALL")
     df = transform(weather)
-    # df.show(5)
-    df_select = df.select("id","name","country",\
-                      "timezone","dt (UTC)",\
-                      "weather_description",\
-                      "temp",\
-                      "pressure","humidity","sea_level","grnd_level",\
-                      "wind_speed","rain_1h","snow_1h","visibility").show()
-
+    # df_select = df.select("id","name","country",\
+    #                   "timezone","dt (UTC)",\
+    #                   "weather_description",\
+    #                   "temp",\
+    #                   "pressure","humidity","sea_level","grnd_level",\
+    #                   "wind_speed","rain_1h","snow_1h","visibility").show()
+    load(df)
 
 
 

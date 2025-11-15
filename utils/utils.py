@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import *
 from pyspark.sql.functions import from_unixtime,col
+from datetime import datetime
 
 
 load_dotenv()
@@ -75,3 +76,8 @@ def create_spark():
 
 
 
+def get_current_date():
+    return datetime.now().date()
+
+def data_exists(file) -> bool:
+    return os.path.exists(file)
