@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import *
 from pyspark.sql.functions import from_unixtime,col
+from datetime import datetime
+from google.cloud import storage
 
 
 load_dotenv()
@@ -73,5 +75,16 @@ def create_spark():
     
     return spark
 
+def get_current_date():
+    return datetime.now().date()
 
+def get_current_year():
+    return datetime.now().year
 
+def data_exists(file) -> bool:
+    return os.path.exists(file)
+
+def init_bucket(bucket_name):
+    # google cloud storage
+    client = storage.Client()   
+    return client.bucket(bucket_name)

@@ -22,15 +22,18 @@ def get_lat_lon(city: str) -> dict:
     
 def get_weather_data(city:str) -> dict:
     results = get_lat_lon(city)
-    req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}"
+    req = f"https://api.openweathermap.org/data/2.5/weather?lat={results['lat']}&lon={results['lon']}&appid={OWM_API_KEY}&units=metric"
     data = requests.get(req).json()
 
     # cast all integer to float if any
     data['coord']['lon'] = float(data['coord']['lon'])
     data['coord']['lat'] = float(data['coord']['lat'])
 
-    data['wind']['speed'] = float(data['wind']['speed'])
-    data['wind']['gust'] = float(data['wind']['gust'])
+    if 'speed' in data['wind']:
+        data['wind']['speed'] = float(data['wind']['speed'])
+
+    if 'gust' in data['wind']:
+        data['wind']['gust'] = float(data['wind']['gust'])
 
     if('rain' in data):
         data['rain']['1h'] = float(data['rain']['1h'])
@@ -38,10 +41,17 @@ def get_weather_data(city:str) -> dict:
     if('snow' in data):
         data['snow']['1h'] = float(data['snow']['1h'])
 
-    data['main']['feels_like'] = float(data['main']['feels_like'])
-    data['main']['temp'] = float(data['main']['temp'])
-    data['main']['temp_min'] = float(data['main']['temp_min'])
-    data['main']['temp_max'] = float(data['main']['temp_max'])
+    if 'feels_like' in data['main']:
+        data['main']['feels_like'] = float(data['main']['feels_like'])
+
+    if 'temp' in data['main']:
+        data['main']['temp'] = float(data['main']['temp'])
+
+    if 'temp_min' in data['main']:
+        data['main']['temp_min'] = float(data['main']['temp_min'])
+
+    if 'temp_max' in data['main']:
+        data['main']['temp_max'] = float(data['main']['temp_max'])
     
     data['weather'] = data['weather'][0] # only save the first one
     return data
@@ -88,6 +98,29 @@ def convert_datetime(df:DataFrame, datetimes:list, timezone:str) -> DataFrame:
 
     return df
 
+def reorder_columns(df:DataFrame, orderByID:bool) -> DataFrame:
+    # drop internal params (cod, base)
+    df = df.select("id","name","country","lon","lat",\
+                    "timezone","dt (UTC)","sunrise (UTC)","sunset (UTC)",\
+                    "weather_id","weather_main","weather_description","weather_icon",\
+                    "temp","feels_like","temp_min","temp_max",\
+                    "pressure","humidity","sea_level","grnd_level",\
+                    "wind_speed","wind_deg","wind_gust","rain_1h","snow_1h","clouds_all","visibility")\
+    
+    if orderByID:
+        df = df.orderBy("id")
+
+    return df
+
+def save_to_local(df:DataFrame):
+    weather_data_csv = f"weather_{get_current_date()}.csv"
+    df_pandas = df.toPandas()
+
+    if not data_exists(f"data/{weather_data_csv}"):
+        df_pandas.to_csv(f"data/{weather_data_csv}", index=False) 
+
+    return weather_data_csv
+
 def extract(region:str) -> list:
     weather = []
     if region not in locations:
@@ -100,25 +133,31 @@ def extract(region:str) -> list:
 
     return weather
 
-
-def transform(weather:list):
+def transform(weather:list) -> DataFrame:
     df = spark.createDataFrame(weather, schema=schema)
     df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
     df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
+    df = reorder_columns(df, orderByID=False)
 
-    df.show(5)
+    weather_data_csv = save_to_local(df)
+    return weather_data_csv
+
+def load(bucket_name, weather_data_csv, region):
+    bucket = init_bucket(bucket_name)
+    object_name = f"weather_{region}_{get_current_year()}/{weather_data_csv}"
     
+    object = bucket.blob(object_name)
 
+    if not object.exists():
+        object.upload_from_filename(f"data/{weather_data_csv}")
 
 
 if __name__ == "__main__":
     # get region from arguments in next change
+    REGION = "ALL"
+
     print("ETL job started")
 
-    weather = extract("ALL")
-    transform(weather)
-
-
-
-
-
+    weather = extract(REGION)
+    weather_data_csv = transform(weather)
+    load("etl-spark-airflow", weather_data_csv, REGION)
