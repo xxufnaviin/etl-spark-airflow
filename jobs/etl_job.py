@@ -112,6 +112,15 @@ def reorder_columns(df:DataFrame, orderByID:bool) -> DataFrame:
 
     return df
 
+def save_to_local(df:DataFrame):
+    weather_data_csv = f"weather_{get_current_date()}.csv"
+    df_pandas = df.toPandas()
+
+    if not data_exists(f"data/{weather_data_csv}"):
+        df_pandas.to_csv(f"data/{weather_data_csv}", index=False) 
+
+    return weather_data_csv
+
 def extract(region:str) -> list:
     weather = []
     if region not in locations:
@@ -124,37 +133,31 @@ def extract(region:str) -> list:
 
     return weather
 
-
 def transform(weather:list) -> DataFrame:
     df = spark.createDataFrame(weather, schema=schema)
     df = flatten_columns(df, exlcude_prefix=["main", "sys", "coord"])
     df = convert_datetime(df, timezone="timezone", datetimes=["dt", "sunset", "sunrise"])
     df = reorder_columns(df, orderByID=False)
+
+    weather_data_csv = save_to_local(df)
+    return weather_data_csv
+
+def load(bucket_name, weather_data_csv, region):
+    bucket = init_bucket(bucket_name)
+    object_name = f"weather_{region}_{get_current_year()}/{weather_data_csv}"
     
-    return df
+    object = bucket.blob(object_name)
 
-def load(df:DataFrame):
-    weather_data_csv = f"data/weather_{get_current_date()}.csv"
-    df_pandas = df.toPandas()
-
-    if not data_exists(weather_data_csv):
-        df_pandas.to_csv(weather_data_csv, index=False) 
+    if not object.exists():
+        object.upload_from_filename(f"data/{weather_data_csv}")
 
 
 if __name__ == "__main__":
     # get region from arguments in next change
+    REGION = "ALL"
+
     print("ETL job started")
 
-    weather = extract("ALL")
-    df = transform(weather)
-    # df_select = df.select("id","name","country",\
-    #                   "timezone","dt (UTC)",\
-    #                   "weather_description",\
-    #                   "temp",\
-    #                   "pressure","humidity","sea_level","grnd_level",\
-    #                   "wind_speed","rain_1h","snow_1h","visibility").show()
-    load(df)
-
-
-
-
+    weather = extract(REGION)
+    weather_data_csv = transform(weather)
+    load("etl-spark-airflow", weather_data_csv, REGION)

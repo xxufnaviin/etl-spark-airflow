@@ -15,6 +15,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5)
 }
 
+REGION = "ALL"
+
 # Define the DAG
 dag = DAG(
     'weather_etl_pipeline',
@@ -26,7 +28,7 @@ dag = DAG(
 )
 
 def extract_weather_data(**context):
-    weather_data = extract("ALL")
+    weather_data = extract(REGION)
     return weather_data
 
 def transform_weather_data(**context):
@@ -34,17 +36,17 @@ def transform_weather_data(**context):
     weather_data = ti.xcom_pull(task_ids='extract_task')
 
     if weather_data:
-        df = transform(weather_data)
+        weather_data_csv = transform(weather_data)
     else:
         raise ValueError("No weather data received from extract task")
-    return df 
+    return weather_data_csv 
 
 def load_weather_data(**context):
     ti = context['ti']
-    df = ti.xcom_pull(task_ids='transform_task')
+    weather_data_csv = ti.xcom_pull(task_ids='transform_task')
 
-    if df:
-        load(df)
+    if weather_data_csv:
+        load("etl-spark-airflow", weather_data_csv, REGION)
     else:
         raise ValueError("No dataframe received for loading")
 
