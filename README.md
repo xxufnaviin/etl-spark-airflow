@@ -33,7 +33,7 @@ Install docker
 docker pull ghcr.io/xxufnaviin/etl-spark-airflow:263.310.4
 ```
 ## 2. Add Google Cloud Credentials
-Place your Google Service Account JSON in the project directory (utils/your-google-creds.json) and ensure the path matches the one in .env.
+Place your Google Service Account JSON in the project directory (utils/your-google-creds.json) and ensure the path matches the one in .env.<br>
 NOTE: must place it under utils/
 
 ## 3. Set Environment Variables
@@ -54,7 +54,7 @@ This starts airflow db-init to initialize local database, airflow webserver and 
 ```bash
 http://localhost:8080
 ```
-username:admin
+username:admin<br>
 password:admin123
 
 ## 6. Exit services
@@ -62,7 +62,7 @@ password:admin123
 docker-compose down
 ```
 
-IMPORTANT: Replace BUCKET_NAME with your own bucket in airflow/dags/dag.py-L19
+IMPORTANT: Replace BUCKET_NAME with your own bucket in airflow/dags/dag.py-L19 <br>
 Contact me for any issues: https://www.linkedin.com/in/xxufnaviin/
 
 ### Next Steps‼️

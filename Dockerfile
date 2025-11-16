@@ -24,7 +24,7 @@ ENV PYTHONPATH=.:$AIRFLOW_HOME:$PYTHONPATH
 
 WORKDIR $AIRFLOW_HOME
 
-# Copy DAGs and cfg
+# Copy DAGs (can be removed next build due to mounting)
 COPY airflow/dags/ $AIRFLOW_HOME/dags/
 
 # Copy spark job (can be removed next build due to mounting)
