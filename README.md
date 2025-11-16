@@ -1,4 +1,4 @@
-# 🌤️ Weather ETL - using Apache Airflow and Apache Spark
+# 🌤️🗲 AuroraFlow- weather ETL platform using Spark and Airflow
 
 This project implements an **ETL (Extract, Transform, Load) pipeline** to collect, process, and store weather data from the **OpenWeatherMap API**. The pipeline leverages **PySpark** for data transformation, **Apache Airflow** for orchestration, **Docker** for custom image and containerization, and **Google Cloud Storage (GCS)** for cloud storage.
 
@@ -27,6 +27,11 @@ The pipeline performs the following steps:
 - **Github Container Registry**
 
 ## Instructions for local development
+### Pre-development. Clone Repo
+```bash
+git clone https://github.com/xxufnaviin/etl-spark-airflow.git
+cd etl-spark-airflow
+```
 ### 1. Pull Docker Image
 Install docker 
 ```bash
