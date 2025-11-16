@@ -63,6 +63,7 @@ docker-compose down
 ```
 
 IMPORTANT: Replace BUCKET_NAME with your own bucket in airflow/dags/dag.py-L19
+Contact me for any issues: https://www.linkedin.com/in/xxufnaviin/
 
 ### Next Steps‼️
 - Monitor performance and **handle errors** that originates from API - including data format changes
