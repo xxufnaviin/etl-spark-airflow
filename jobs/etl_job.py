@@ -155,9 +155,10 @@ def load(bucket_name, weather_data_csv, region):
 if __name__ == "__main__":
     # get region from arguments in next change
     REGION = "ALL"
+    BUCKET_NAME = "etl-spark-airflow"
 
     print("ETL job started")
 
     weather = extract(REGION)
     weather_data_csv = transform(weather)
-    load("etl-spark-airflow", weather_data_csv, REGION)
+    load(BUCKET_NAME, weather_data_csv, REGION) # replace bucket name with your own bucket name

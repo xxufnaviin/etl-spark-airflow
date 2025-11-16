@@ -16,6 +16,7 @@ default_args = {
 }
 
 REGION = "ALL"
+BUCKET_NAME = "etl-spark-airflow" # replace with your own bucket name
 
 
 dag = DAG(
@@ -46,7 +47,7 @@ def load_weather_data(**context):
     weather_data_csv = ti.xcom_pull(task_ids='transform_task')
 
     if weather_data_csv:
-        load("etl-spark-airflow", weather_data_csv, REGION)
+        load(BUCKET_NAME, weather_data_csv, REGION)
     else:
         raise ValueError("No dataframe received for loading")
 
