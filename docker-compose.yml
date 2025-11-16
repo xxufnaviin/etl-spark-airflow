@@ -1,6 +1,6 @@
 services:
   init-db:
-    image: etl-spark-airflow:263.310.4
+    image: ghcr.io/xxufnaviin/etl-spark-airflow:263.310.4
     command: >
       bash -c "
       airflow db init &&\
@@ -10,7 +10,7 @@ services:
       - ./airflow:/opt/airflow
 
   scheduler:
-    image: etl-spark-airflow:263.310.4
+    image: ghcr.io/xxufnaviin/etl-spark-airflow:263.310.4
     command: scheduler
     env_file: .env
     depends_on:
@@ -25,7 +25,7 @@ services:
       PYTHONPATH: /opt:$PYTHONPATH
 
   webserver:
-    image: etl-spark-airflow:263.310.4
+    image: ghcr.io/xxufnaviin/etl-spark-airflow:263.310.4
     command: webserver
     env_file: .env
     ports:

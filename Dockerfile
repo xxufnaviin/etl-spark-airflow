@@ -24,15 +24,6 @@ ENV PYTHONPATH=.:$AIRFLOW_HOME:$PYTHONPATH
 
 WORKDIR $AIRFLOW_HOME
 
-# Copy DAGs (can be removed next build due to mounting)
-COPY airflow/dags/ $AIRFLOW_HOME/dags/
-
-# Copy spark job (can be removed next build due to mounting)
-COPY jobs/ $AIRFLOW_HOME/jobs/
-
-# Copy utils scripts (can be removed next build due to mounting)
-COPY utils/ $AIRFLOW_HOME/utils/
-
 USER airflow
 # Copy requirements and install them
 COPY airflow/requirements.txt $AIRFLOW_HOME/
