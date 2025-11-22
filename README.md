@@ -1,7 +1,8 @@
 # ⚡AuroraFlow - weather ETL platform using Spark and Airflow
 
-This project implements an **ETL (Extract, Transform, Load) pipeline** to collect, process, and store weather data from the **OpenWeatherMap API**. The pipeline leverages **PySpark** for data transformation, **Apache Airflow** for orchestration, **Docker** for custom image and containerization, and **Google Cloud Storage (GCS)** for cloud storage.
+This project implements an **ETL (Extract, Transform, Load) pipeline** to collect, process, and store weather data from the **OpenWeatherMap API**. The pipeline leverages **PySpark** for data transformation, **Apache Airflow** for orchestration, **Docker** for custom image and containerization, **Google Cloud Storage (GCS)** for cloud storage, and **Google Compute Engine(GCE)** for for hosting Airflow services on a virtual machine.
 
+Airflow is hosted and accessible at: http://34.177.92.81:8080
 
 ## Project Overview
 
@@ -13,6 +14,7 @@ The pipeline performs the following steps:
 4. **Orchestration**: Automates scheduling and monitoring of the ETL workflow using Airflow.
 5. **Custom Docker Image**: Allow scripts to run on Airflow base image on top of Spark + Java + Python dependencies.
 6. **Containerization**: Allow local development and testing with docker compose, easier for deployment.
+7. **Airflow Hosting**: The Airflow webserver and scheduler are deployed on a Google Compute Engine VM, allowing remote access and monitoring.
 
 
 ### Architecture
@@ -22,7 +24,8 @@ The pipeline performs the following steps:
 - **Python** 
 - **PySpark** 
 - **Apache Airflow** 
-- **Google Cloud Storage (GCS)** 
+- **Google Cloud Storage (GCS)**
+- **Google Compute Engine (GCE)**
 - **Docker**
 - **Github Container Registry**
 
