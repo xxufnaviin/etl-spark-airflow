@@ -2,7 +2,7 @@
 
 This project implements an **ETL (Extract, Transform, Load) pipeline** to collect, process, and store weather data from the **OpenWeatherMap API**. The pipeline leverages **PySpark** for data transformation, **Apache Airflow** for orchestration, **Docker** for custom image and containerization, **Google Cloud Storage (GCS)** for cloud storage, and **Google Compute Engine(GCE)** for for hosting Airflow services on a virtual machine.
 
-Airflow is hosted and accessible at: http://34.177.92.81:8080
+Airflow is hosted and accessible at: http://34.177.92.81:8080 **EDIT: SERVER IS CLOSED DOWN DUE TO FREE TRIAL ENDING ON GCP😆**
 
 ## Project Overview
 
